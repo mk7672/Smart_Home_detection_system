@@ -1,6 +1,14 @@
 import Sidebar from "../components/Sidebar";
+import { useEffect, useState } from "react";
+import API from "../api";
 
 export default function History() {
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    API.get("/events").then(res => setEvents(res.data));
+  }, []);
+
   return (
     <div className="flex">
       <Sidebar />
@@ -16,12 +24,15 @@ export default function History() {
               <th>Time</th>
             </tr>
           </thead>
+
           <tbody>
-            <tr>
-              <td>Human</td>
-              <td>95%</td>
-              <td>10:45 PM</td>
-            </tr>
+            {events.map((e, i) => (
+              <tr key={i}>
+                <td>{e.label}</td>
+                <td>{Math.round(e.confidence * 100)}%</td>
+                <td>{new Date(e.timestamp).toLocaleString()}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
