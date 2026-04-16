@@ -1,0 +1,7 @@
+ultralytics
+flask
+numpy
+scikit-learn
+cryptography
+opencv-python
+requests
