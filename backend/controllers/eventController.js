@@ -1,7 +1,7 @@
 const Event = require("../models/Event");
 const path = require("path");
 const fs = require("fs");
-
+const uploadToS3 = require("../utils/uploadToS3");
 const detectImage = require("../services/dlService");
 const sendNotification = require("../services/notificationService");
 
@@ -17,9 +17,11 @@ exports.uploadEvent = async (req, res) => {
 
     fs.writeFileSync(filePath, req.file.buffer);
 
-    const imageUrl = `http://localhost:3000/uploads/${fileName}`;
+    // ☁️ Upload to S3
+    const s3Result = await uploadToS3(filePath, fileName);
+    const imageUrl = s3Result.Location;
 
-    // 🔥 ML + SECURITY
+    // 🧠 ML Detection
     const detection = await detectImage(filePath);
 
     const newEvent = new Event({
@@ -30,10 +32,14 @@ exports.uploadEvent = async (req, res) => {
 
     await newEvent.save();
 
+    // 🔔 Alert
     if (detection.alert) {
       await sendNotification(newEvent);
       console.log("🔊 BUZZER ON");
     }
+
+    // 🧹 Optional cleanup
+    fs.unlinkSync(filePath);
 
     res.status(201).json({
       message: "Processed successfully",
